@@ -1,0 +1,12 @@
+.env
+venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+test_out.txt
+finance_tracker_takehome.html
+.env
+alembic.ini
+tmp_*.py
+tmp_*.txt
+.idea/
