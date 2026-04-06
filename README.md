@@ -1,56 +1,102 @@
-# Finance Tracker API
+# 💰 Finance Tracker API
 
-A backend finance tracking system built with FastAPI and PostgreSQL.
-Built as part of a backend engineering assignment.
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker)](https://www.docker.com/)
+[![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render)](https://render.com/)
 
-## Tech Stack
-- FastAPI + Uvicorn
-- PostgreSQL + SQLAlchemy + Alembic
-- JWT authentication (python-jose + passlib)
-- pytest for testing
-- Docker + docker-compose
+A high-performance backend finance tracking system built with **FastAPI** and **PostgreSQL**. This API allows users to manage transactions, track expenses, and view detailed financial analytics with role-based access control.
 
-## Running the project (quickest way)
+---
+
+## 🚀 Features
+
+- **🔐 Secure Authentication**: JWT-based auth with `passlib` (bcrypt) for password hashing.
+- **👥 Role-Based Access Control (RBAC)**:
+  - `Viewer`: Read-only access to transactions and basic summaries.
+  - `Analyst`: View detailed monthly/category analytics and filter transactions.
+  - `Admin`: Full CRUD capabilities for transactions and user management.
+- **📊 Advanced Analytics**:
+  - Real-time balance calculation (Income - Expense).
+  - Monthly breakdown of financial activity.
+  - Category-wise spending analysis with percentage distribution.
+- **🔍 Powerful Filtering**: Filter transactions by type, category, date range, and amount.
+- **📄 Pagination**: Efficient data retrieval for large transaction histories.
+- **🛠️ Tech Stack**: FastAPI, SQLAlchemy (ORM), Alembic (Migrations), Pydantic v2, Docker & Render.
+
+---
+
+## 🛠️ Installation & Local Setup
+
+### Using Docker (Recommended)
+The quickest way to get started is using Docker Compose:
 
 ```bash
-git clone <repo>
-cd finance-tracker
+git clone https://github.com/Eshita-1512/Finance_Tracker_API.git
+cd Finance_Tracker_API
 docker compose up --build
 ```
 
-The API will be at http://localhost:8000
-Interactive docs at http://localhost:8000/docs
+### Manual Setup
+1. **Clone the repo**: `git clone <repo_url>`
+2. **Create a virtual environment**: `python -m venv venv`
+3. **Install dependencies**: `pip install -r requirements.txt`
+4. **Set up environment variables**: Create a `.env` file based on `.env.example`.
+5. **Run migrations**: `alembic upgrade head`
+6. **Start the server**: `uvicorn app.main:app --reload`
 
-## Test users (created by seed data on startup)
+---
 
-| Role     | Email              | Password    |
-|----------|--------------------|-------------|
-| admin    | admin@test.com     | admin123    |
-| analyst  | analyst@test.com   | analyst123  |
-| viewer   | viewer@test.com    | viewer123   |
+## 🌐 Deployment (Render)
 
-1. Hit POST /auth/login with any of the above
-2. Copy the token from the response
-3. Click Authorize in /docs, paste the token
-4. All protected endpoints now work
+This project is configured for seamless deployment on **Render** using the provided `render.yaml` and `Dockerfile`.
 
-## Roles and permissions
+1. **Connect your GitHub repository** to Render.
+2. Render will automatically detect the `render.yaml` file and set up:
+   - A **Web Service** for the FastAPI application.
+   - A **Managed PostgreSQL** instance.
+3. Ensure the `DATABASE_URL` environment variable is correctly linked (handled automatically by `render.yaml`).
 
-- Viewer: read transactions, basic summary
-- Analyst: everything viewer can + filters + monthly/category analytics
-- Admin: full CRUD + manage users
+---
 
-## Assumptions I made
+## 📖 API Documentation
 
-- Transactions belong to a user (user_id is set from JWT, not request body)
-- "Current balance" means total income minus total expenses across all time
-- Roles are assigned at registration (viewer by default), changed by admin
-- Amount uses Numeric(12,2) to avoid floating point precision issues with money
+Once the server is running, access the interactive documentation at:
+- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Redoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
-## What I'd add with more time
+---
 
-- Pagination cursor-based instead of offset (better for large datasets)
-- Soft delete for transactions instead of hard delete
-- Transaction categories as a separate table with predefined options
-- Rate limiting on auth endpoints
-- CSV export for transactions
+## 🧪 Default Test Users
+
+The database is seeded with the following accounts for testing:
+
+| Role    | Email            | Password    |
+|---------|------------------|-------------|
+| Admin   | `admin@test.com`   | `admin123`    |
+| Analyst | `analyst@test.com` | `analyst123`  |
+| Viewer  | `viewer@test.com`  | `viewer123`   |
+
+> [!TIP]
+> Use the `/auth/login` endpoint to get a JWT token, then use it in the **Authorize** header in Swagger UI.
+
+---
+
+## 📁 Project Structure
+
+```text
+.
+├── app/
+│   ├── routers/       # API Route handlers (auth, admin, transactions, summary)
+│   ├── auth.py        # JWT & Security logic
+│   ├── database.py    # DB Connection & Session management
+│   ├── models.py      # SQLAlchemy Models
+│   ├── schemas.py     # Pydantic Schemas
+│   └── main.py        # FastAPI Application Entrypoint
+├── migrations/        # Alembic database migrations
+├── tests/             # Pytest suite
+├── Dockerfile         # Container configuration
+├── render.yaml        # Render Blueprint configuration
+└── requirements.txt   # Python dependencies
+```
+
