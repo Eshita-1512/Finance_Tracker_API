@@ -31,17 +31,30 @@ A high-performance backend finance tracking system built with **FastAPI** and **
 ### Using Docker (Recommended)
 The quickest way to get started is using Docker Compose:
 
-```bash
-git clone https://github.com/Eshita-1512/Finance_Tracker_API.git
-cd Finance_Tracker_API
-docker compose up --build
-```
+1. **Clone the repo**:
+   ```bash
+   git clone https://github.com/Eshita-1512/Finance_Tracker_API.git
+   cd Finance_Tracker_API
+   ```
+2. **Set up environment variables**:
+   ```bash
+   cp .env.example .env
+   # Edit .env and set your values!
+   ```
+3. **Run Docker**:
+   ```bash
+   docker compose up --build
+   ```
 
 ### Manual Setup
 1. **Clone the repo**: `git clone <repo_url>`
 2. **Create a virtual environment**: `python -m venv venv`
 3. **Install dependencies**: `pip install -r requirements.txt`
-4. **Set up environment variables**: Create a `.env` file based on `.env.example`.
+4. **Set up environment variables**: 
+   ```bash
+   cp .env.example .env
+   # Edit .env and set your values!
+   ```
 5. **Run migrations**: `alembic upgrade head`
 6. **Start the server**: `uvicorn app.main:app --reload`
 

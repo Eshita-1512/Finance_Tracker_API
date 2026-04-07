@@ -63,6 +63,16 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    load_dotenv()
+    url = os.getenv("DATABASE_URL")
+    if not url:
+        user = os.getenv("POSTGRES_USER", "postgres")
+        pw = os.getenv("POSTGRES_PASSWORD", "postgres")
+        db = os.getenv("POSTGRES_DB", "finance_tracker")
+        url = f"postgresql://{user}:{pw}@localhost:5432/{db}"
+    
+    config.set_main_option("sqlalchemy.url", url)
+
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

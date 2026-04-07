@@ -11,7 +11,9 @@ pwd_context = CryptContext(
     schemes=['bcrypt'],
     deprecated='auto',
 )
-SECRET_KEY = os.environ.get("SECRET_KEY","dev-only-change-in-production")
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    SECRET_KEY = "dev-only-change-in-production-use-env-file"
 ALGORITHM = "HS256"
 TOKEN_EXPIRATION_SECONDS = 60 * 60 * 24
 
