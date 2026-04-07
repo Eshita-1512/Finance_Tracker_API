@@ -2,6 +2,7 @@
 set -e
 
 echo "Running database migrations..."
+
 alembic -c alembic.ini upgrade head
 
 echo "Seeding the database..."
