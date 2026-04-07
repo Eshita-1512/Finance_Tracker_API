@@ -44,7 +44,11 @@ def run_migrations_offline() -> None:
     load_dotenv()
 
     def get_url():
-        return os.getenv("DATABASE_URL")
+        url = os.getenv("DATABASE_URL")
+        if url and url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
+        return url
+
     context.configure(
         url=get_url(),
         target_metadata=target_metadata,
@@ -70,6 +74,9 @@ def run_migrations_online() -> None:
         pw = os.getenv("POSTGRES_PASSWORD", "postgres")
         db = os.getenv("POSTGRES_DB", "finance_tracker")
         url = f"postgresql://{user}:{pw}@localhost:5432/{db}"
+    
+    if url and url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
     
     config.set_main_option("sqlalchemy.url", url)
 
