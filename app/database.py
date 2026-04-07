@@ -4,15 +4,17 @@ from sqlalchemy.orm import sessionmaker,declarative_base
 from dotenv import load_dotenv
 
 load_dotenv()
-DATABASE_URL= os.getenv('DATABASE_URL')
-engine = create_engine(DATABASE_URL)
-Session = sessionmaker(bind=engine)
-session = Session()
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-base=declarative_base()
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+base = declarative_base()
 
 def get_db():
-    db = Session()
+    db = SessionLocal()
     try:
         yield db
     finally:

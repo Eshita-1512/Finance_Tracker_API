@@ -1,9 +1,9 @@
-from app.database import Session
+from app.database import SessionLocal
 from app.models import User, Transaction, UserRole, transaction_type
 from app.auth import hash_password
 from datetime import datetime, timedelta, timezone
 
-db = Session()
+db = SessionLocal()
 
 try:
     print("Seeding database")
