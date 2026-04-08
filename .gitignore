@@ -10,3 +10,4 @@ alembic.ini
 tmp_*.py
 tmp_*.txt
 .idea/
+.venv/
