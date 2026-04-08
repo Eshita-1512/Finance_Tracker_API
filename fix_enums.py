@@ -1,83 +1,41 @@
-"""Fix enum values in PostgreSQL.
-- Prints current enum values.
-- Adds missing enum values if the enum type is completely empty.
-- Renames uppercase values to lowercase.
-"""
+import os
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
-import os
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
+# Use AUTOCOMMIT isolation level for ALTER TYPE commands
 engine = create_engine(DATABASE_URL)
 
-with engine.connect() as conn:
-    print("--- CURRENT ENUM VALUES IN DATABASE ---")
-    
-    # Debug user_roles_enum
-    result = conn.execute(text(
-        "SELECT enumlabel FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid "
-        "WHERE t.typname = 'user_roles_enum'"
-    ))
-    roles = [row[0] for row in result]
-    print(f"user_roles_enum values: {roles}")
-
-    if not roles:
-        print("user_roles_enum is EMPTY. Adding values...")
-        # Since the type has no values, we need to add them
-        try:
-            conn.execute(text("ALTER TYPE user_roles_enum ADD VALUE 'admin'"))
-            conn.execute(text("ALTER TYPE user_roles_enum ADD VALUE 'analyst'"))
-            conn.execute(text("ALTER TYPE user_roles_enum ADD VALUE 'viewer'"))
-            conn.commit()
-            print("Successfully added values to user_roles_enum.")
-        except Exception as e:
-            print(f"Failed to add values to user_roles_enum: {e}")
-
-    # Debug transaction_type_enum
-    result = conn.execute(text(
-        "SELECT enumlabel FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid "
-        "WHERE t.typname = 'transaction_type_enum'"
-    ))
-    tx_types = [row[0] for row in result]
-    print(f"transaction_type_enum values: {tx_types}")
-
-    if not tx_types:
-        print("transaction_type_enum is EMPTY. Adding values...")
-        try:
-            conn.execute(text("ALTER TYPE transaction_type_enum ADD VALUE 'income'"))
-            conn.execute(text("ALTER TYPE transaction_type_enum ADD VALUE 'expense'"))
-            conn.commit()
-            print("Successfully added values to transaction_type_enum.")
-        except Exception as e:
-            print(f"Failed to add values to transaction_type_enum: {e}")
-
-    print("--- END ENUM VALUES ---")
-
-    # If they are Title Case ('Admin', 'Analyst', 'Viewer') let's fix them.
-    for role in roles:
-        if role != role.lower():
-            print(f"Found non-lowercase role: {role}, renaming to {role.lower()}")
+def run_fix():
+    with engine.connect() as conn:
+        # PostgreSQL doesn't allow ALTER TYPE inside transactions for adding values
+        # We use execution_options to set AUTOCOMMIT for this connection
+        conn = conn.execution_options(isolation_level="AUTOCOMMIT")
+        
+        print("--- FIXING ENUMS ---")
+        
+        # 1. Ensure user_roles_enum has all values
+        for role in ['admin', 'analyst', 'viewer']:
             try:
-                conn.execute(text(f"ALTER TYPE user_roles_enum RENAME VALUE '{role}' TO '{role.lower()}'"))
-                conn.commit()
+                # Add value if it doesn't exist
+                conn.execute(text(f"ALTER TYPE user_roles_enum ADD VALUE IF NOT EXISTS '{role}'"))
+                print(f"Ensured role '{role}' exists.")
             except Exception as e:
-                print(f"Failed to rename {role}: {e}")
+                print(f"Skipped adding role {role}: {e}")
 
-    for tx in tx_types:
-        if tx != tx.lower():
-            lower_tx = tx.lower()
-            if lower_tx == 'expenses':
-                lower_tx = 'expense'
-            if lower_tx != tx:
-                print(f"Found non-lowercase tx type: {tx}, renaming to {lower_tx}")
-                try:
-                    conn.execute(text(f"ALTER TYPE transaction_type_enum RENAME VALUE '{tx}' TO '{lower_tx}'"))
-                    conn.commit()
-                except Exception as e:
-                    print(f"Failed to rename {tx}: {e}")
+        # 2. Ensure transaction_type_enum has all values
+        for tx_type in ['income', 'expense']:
+            try:
+                conn.execute(text(f"ALTER TYPE transaction_type_enum ADD VALUE IF NOT EXISTS '{tx_type}'"))
+                print(f"Ensured tx type '{tx_type}' exists.")
+            except Exception as e:
+                print(f"Skipped adding tx type {tx_type}: {e}")
 
-    print("Enum fix complete.")
+        print("Enum fix complete.")
+
+if __name__ == "__main__":
+    run_fix()

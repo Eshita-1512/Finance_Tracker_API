@@ -41,6 +41,24 @@ formatter = generic
 format = %(levelname)-5.5s [%(name)s] %(message)s
 EOF
 
+echo "Waiting for database to be ready..."
+python -c "
+import os, time, sqlalchemy
+from dotenv import load_dotenv
+load_dotenv()
+url = os.getenv('DATABASE_URL')
+if url and url.startswith('postgres://'): url = url.replace('postgres://', 'postgresql://', 1)
+engine = sqlalchemy.create_engine(url)
+for i in range(30):
+    try:
+        engine.connect()
+        print('Database is ready!')
+        break
+    except Exception as e:
+        print(f'Waiting for database... ({i+1}/30)')
+        time.sleep(2)
+"
+
 echo "Running database migrations..."
 alembic -c alembic.ini upgrade head
 
