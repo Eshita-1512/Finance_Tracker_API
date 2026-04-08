@@ -10,40 +10,48 @@ load_dotenv()
 engine = create_engine(os.getenv("DATABASE_URL"))
 
 with engine.connect() as conn:
-    # Fix user_roles_enum: rename uppercase to lowercase if they exist
+    print("--- CURRENT ENUM VALUES IN DATABASE ---")
+    
+    # Debug user_roles_enum
     result = conn.execute(text(
         "SELECT enumlabel FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid "
-        "WHERE t.typname = 'user_roles_enum' AND e.enumlabel = 'ADMIN'"
+        "WHERE t.typname = 'user_roles_enum'"
     ))
-    if result.fetchone():
-        print("Found uppercase user_roles_enum values, renaming to lowercase...")
-        conn.execute(text("ALTER TYPE user_roles_enum RENAME VALUE 'ADMIN' TO 'admin'"))
-        conn.execute(text("ALTER TYPE user_roles_enum RENAME VALUE 'ANALYST' TO 'analyst'"))
-        conn.execute(text("ALTER TYPE user_roles_enum RENAME VALUE 'VIEWER' TO 'viewer'"))
-        conn.commit()
-        print("user_roles_enum fixed.")
-    else:
-        print("user_roles_enum already has lowercase values.")
+    roles = [row[0] for row in result]
+    print(f"user_roles_enum values: {roles}")
 
-    # Fix transaction_type_enum: rename uppercase to lowercase if they exist
+    # Debug transaction_type_enum
     result = conn.execute(text(
         "SELECT enumlabel FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid "
-        "WHERE t.typname = 'transaction_type_enum' AND e.enumlabel = 'INCOME'"
+        "WHERE t.typname = 'transaction_type_enum'"
     ))
-    if result.fetchone():
-        print("Found uppercase transaction_type_enum values, renaming to lowercase...")
-        conn.execute(text("ALTER TYPE transaction_type_enum RENAME VALUE 'INCOME' TO 'income'"))
-        # Handle both EXPENSES and EXPENSE
-        try:
-            conn.execute(text("ALTER TYPE transaction_type_enum RENAME VALUE 'EXPENSES' TO 'expense'"))
-        except Exception:
+    tx_types = [row[0] for row in result]
+    print(f"transaction_type_enum values: {tx_types}")
+
+    print("--- END ENUM VALUES ---")
+
+    # If the database has NO values for the enum for some reason, maybe the type got messed up?
+    # Or if they are Title Case ('Admin', 'Analyst', 'Viewer') let's fix them.
+    for role in roles:
+        if role != role.lower():
+            print(f"Found non-lowercase role: {role}, renaming to {role.lower()}")
             try:
-                conn.execute(text("ALTER TYPE transaction_type_enum RENAME VALUE 'EXPENSE' TO 'expense'"))
-            except Exception:
-                pass
-        conn.commit()
-        print("transaction_type_enum fixed.")
-    else:
-        print("transaction_type_enum already has lowercase values.")
+                conn.execute(text(f"ALTER TYPE user_roles_enum RENAME VALUE '{role}' TO '{role.lower()}'"))
+                conn.commit()
+            except Exception as e:
+                print(f"Failed to rename {role}: {e}")
+
+    for tx in tx_types:
+        if tx != tx.lower():
+            lower_tx = tx.lower()
+            if lower_tx == 'expenses':
+                lower_tx = 'expense'
+            if lower_tx != tx:
+                print(f"Found non-lowercase tx type: {tx}, renaming to {lower_tx}")
+                try:
+                    conn.execute(text(f"ALTER TYPE transaction_type_enum RENAME VALUE '{tx}' TO '{lower_tx}'"))
+                    conn.commit()
+                except Exception as e:
+                    print(f"Failed to rename {tx}: {e}")
 
     print("Enum fix complete.")
