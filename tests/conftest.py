@@ -1,7 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from app.database import get_db, engine, Session, base
+from sqlalchemy.orm import Session
+from app.database import get_db, engine, base
 
 @pytest.fixture(scope="session")
 def db_engine():
