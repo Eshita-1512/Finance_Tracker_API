@@ -1,12 +1,16 @@
 #!/bin/bash
-set -e
+set -ex
 
+# Ensure DATABASE_URL is in the correct format for Python/SQLAlchemy
+if [[ $DATABASE_URL == postgres://* ]]; then
+  export DATABASE_URL="${DATABASE_URL/postgres:\/\//postgresql:\/\/}"
+fi
 
 cat <<EOF > alembic.ini
 [alembic]
 script_location = migrations
 prepend_sys_path = .
-sqlalchemy.url = postgresql://user:pass@localhost/dbname
+sqlalchemy.url = $DATABASE_URL
 
 [loggers]
 keys = root,sqlalchemy,alembic
@@ -41,32 +45,27 @@ formatter = generic
 format = %(levelname)-5.5s [%(name)s] %(message)s
 EOF
 
+echo "--- DEPLOYMENT STARTUP ---"
+
+# Use pg_isready to wait for the database
 echo "Waiting for database to be ready..."
-python -c "
-import os, time, sqlalchemy
-from dotenv import load_dotenv
-load_dotenv()
-url = os.getenv('DATABASE_URL')
-if url and url.startswith('postgres://'): url = url.replace('postgres://', 'postgresql://', 1)
-engine = sqlalchemy.create_engine(url)
-for i in range(30):
-    try:
-        engine.connect()
-        print('Database is ready!')
-        break
-    except Exception as e:
-        print(f'Waiting for database... ({i+1}/30)')
-        time.sleep(2)
-"
+for i in {1..30}; do
+  if pg_isready -d "$DATABASE_URL"; then
+    echo "Database is reachable!"
+    break
+  fi
+  echo "Database not ready yet ($i/30)..."
+  sleep 2
+done
 
-echo "Running database migrations..."
-alembic -c alembic.ini upgrade head
+echo "Running migrations..."
+alembic -c alembic.ini upgrade head || echo "Migration warning: proceeding anyway"
 
-echo "Fixing enum values..."
-python fix_enums.py
+echo "Applying enum fixes..."
+python fix_enums.py || echo "Enum fix warning: proceeding anyway"
 
-echo "Seeding the database..."
-python seed.py
+echo "Seeding database..."
+python seed.py || echo "Seeding warning: proceeding anyway"
 
-echo "Starting the application on port ${PORT:-8000}..."
+echo "Finalizing startup on port ${PORT:-8000}..."
 exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}

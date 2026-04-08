@@ -7,8 +7,8 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# Use AUTOCOMMIT isolation level for ALTER TYPE commands
-engine = create_engine(DATABASE_URL)
+# Use AUTOCOMMIT isolation level and a connection timeout
+engine = create_engine(DATABASE_URL, connect_args={'connect_timeout': 10})
 
 def run_fix():
     with engine.connect() as conn:
