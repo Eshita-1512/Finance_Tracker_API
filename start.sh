@@ -44,6 +44,9 @@ EOF
 echo "Running database migrations..."
 alembic -c alembic.ini upgrade head
 
+echo "Fixing enum values..."
+python fix_enums.py
+
 echo "Seeding the database..."
 python seed.py
 
