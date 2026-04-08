@@ -76,7 +76,7 @@ This project is configured for seamless deployment on **Render** using the provi
 
 Once the server is running, access the interactive documentation at:
 - **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Render**: [https://finance-tracker-api-xzmi.onrender.com](https://finance-tracker-api-xzmi.onrender.com)
+- **Render**: [https://finance-tracker-api-ezyw.onrender.com](https://finance-tracker-api-ezyw.onrender.com/)
 
 ---
 
