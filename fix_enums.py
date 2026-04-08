@@ -1,6 +1,7 @@
-"""Fix enum values in PostgreSQL to be lowercase.
-Handles the case where enums were created with UPPERCASE member names
-but the application now expects lowercase values.
+"""Fix enum values in PostgreSQL.
+- Prints current enum values.
+- Adds missing enum values if the enum type is completely empty.
+- Renames uppercase values to lowercase.
 """
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
@@ -20,6 +21,18 @@ with engine.connect() as conn:
     roles = [row[0] for row in result]
     print(f"user_roles_enum values: {roles}")
 
+    if not roles:
+        print("user_roles_enum is EMPTY. Adding values...")
+        # Since the type has no values, we need to add them
+        try:
+            conn.execute(text("ALTER TYPE user_roles_enum ADD VALUE 'admin'"))
+            conn.execute(text("ALTER TYPE user_roles_enum ADD VALUE 'analyst'"))
+            conn.execute(text("ALTER TYPE user_roles_enum ADD VALUE 'viewer'"))
+            conn.commit()
+            print("Successfully added values to user_roles_enum.")
+        except Exception as e:
+            print(f"Failed to add values to user_roles_enum: {e}")
+
     # Debug transaction_type_enum
     result = conn.execute(text(
         "SELECT enumlabel FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid "
@@ -28,10 +41,19 @@ with engine.connect() as conn:
     tx_types = [row[0] for row in result]
     print(f"transaction_type_enum values: {tx_types}")
 
+    if not tx_types:
+        print("transaction_type_enum is EMPTY. Adding values...")
+        try:
+            conn.execute(text("ALTER TYPE transaction_type_enum ADD VALUE 'income'"))
+            conn.execute(text("ALTER TYPE transaction_type_enum ADD VALUE 'expense'"))
+            conn.commit()
+            print("Successfully added values to transaction_type_enum.")
+        except Exception as e:
+            print(f"Failed to add values to transaction_type_enum: {e}")
+
     print("--- END ENUM VALUES ---")
 
-    # If the database has NO values for the enum for some reason, maybe the type got messed up?
-    # Or if they are Title Case ('Admin', 'Analyst', 'Viewer') let's fix them.
+    # If they are Title Case ('Admin', 'Analyst', 'Viewer') let's fix them.
     for role in roles:
         if role != role.lower():
             print(f"Found non-lowercase role: {role}, renaming to {role.lower()}")
