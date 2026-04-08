@@ -26,7 +26,7 @@ def upgrade() -> None:
     sa.Column('username', sa.String(), nullable=True),
     sa.Column('email', sa.String(), nullable=True),
     sa.Column('hashed_password', sa.String(), nullable=True),
-    sa.Column('role', sa.Enum(name='user_roles_enum'), nullable=True),
+    sa.Column('role', sa.Enum('admin', 'analyst', 'viewer', name='user_roles_enum'), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
@@ -38,7 +38,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('amount', sa.Numeric(precision=12, scale=2), nullable=True),
-    sa.Column('type', sa.Enum(name='transaction_type_enum'), nullable=True),
+    sa.Column('type', sa.Enum('income', 'expense', name='transaction_type_enum'), nullable=True),
     sa.Column('category', sa.String(), nullable=True),
     sa.Column('notes', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
