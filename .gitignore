@@ -11,3 +11,5 @@ tmp_*.py
 tmp_*.txt
 .idea/
 .venv/
+check_enums.py
+verify_fix.py

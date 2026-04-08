@@ -23,7 +23,7 @@ def register(user:UserRegister,db:Session = Depends(get_db)):
         email=user.email.lower(),
         username=user.username,
         hashed_password=hash_pass,
-        role=UserRole.VIEWER
+        role=UserRole.viewer
     )
     db.add(new_user)
     db.commit()
