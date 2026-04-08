@@ -15,8 +15,8 @@ def overall_summary(
         db:Session=Depends(get_db),
         cur_user=Depends(get_current_user)):
     totals=db.query(
-        func.sum(case((Transaction.type==transaction_type.INCOME,Transaction.amount),else_=0)).label("total_income"),
-        func.sum(case((Transaction.type==transaction_type.EXPENSES,Transaction.amount),else_=0)).label("total_expense"),
+        func.sum(case((Transaction.type==transaction_type.income,Transaction.amount),else_=0)).label("total_income"),
+        func.sum(case((Transaction.type==transaction_type.expense,Transaction.amount),else_=0)).label("total_expense"),
         func.count(Transaction.id).label("total_transactions")
     ).one()
     total_income=totals.total_income or 0
@@ -44,12 +44,12 @@ def overall_summary(
 
 @router.get("/monthly",response_model=List[SummaryResponse],status_code=status.HTTP_200_OK)
 def overall_monthly(year:Optional[int],db:Session=Depends(get_db), cur_user=Depends(get_current_user)):
-    if cur_user.role not in [UserRole.ADMIN,UserRole.ANALYST]:
+    if cur_user.role not in [UserRole.admin,UserRole.analyst]:
         raise HTTPException(403,"You are not authorized to view this page")
     query=db.query(
         func.date_trunc("month",Transaction.created_at).label("month"),
-        func.sum(case((Transaction.type==transaction_type.INCOME,Transaction.amount),else_=0)).label("income"),
-        func.sum(case((Transaction.type==transaction_type.EXPENSES,Transaction.amount),else_=0)).label("expense")
+        func.sum(case((Transaction.type==transaction_type.income,Transaction.amount),else_=0)).label("income"),
+        func.sum(case((Transaction.type==transaction_type.expense,Transaction.amount),else_=0)).label("expense")
     )
     if year:
         query=query.filter(func.extract("year",Transaction.created_at)==year)
@@ -79,7 +79,7 @@ def recent(db:Session=Depends(get_db), cur_user=Depends(get_current_user)):
 
 @router.get("/categories")
 def category_breakdown(db=Depends(get_db), cur_user=Depends(get_current_user)):
-    if cur_user.role not in [UserRole.ADMIN,UserRole.ANALYST]:
+    if cur_user.role not in [UserRole.admin,UserRole.analyst]:
         raise HTTPException(403,"You are not authorized to view this page")
     total = db.query(func.sum(Transaction.amount).label("total")).one()
     rows=(db.query(

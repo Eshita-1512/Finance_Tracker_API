@@ -54,7 +54,7 @@ def get_transaction(id: int, db: Session = Depends(get_db), cur_user=Depends(get
 
 @router.post("/", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
 def create_transaction(transaction:TransactionCreate,db: Session = Depends(get_db), cur_user=Depends(get_current_user)):
-    if cur_user.role == UserRole.VIEWER:
+    if cur_user.role == UserRole.viewer:
         raise HTTPException(status_code=403, detail="Viewers cannot create transactions")
     new_transaction = Transaction(
         user_id=cur_user.id,
@@ -72,7 +72,7 @@ def create_transaction(transaction:TransactionCreate,db: Session = Depends(get_d
 
 @router.put("/{id}", response_model=TransactionResponse, status_code=status.HTTP_200_OK)
 def update_transaction(id:int,update_transaction:TransactionUpdate,db: Session = Depends(get_db), cur_user=Depends(get_current_user)):
-    if cur_user.role not in [UserRole.ADMIN,UserRole.ANALYST]:
+    if cur_user.role not in [UserRole.admin,UserRole.analyst]:
         raise HTTPException(403, "You are not authorized to perform this action")
     query = db.query(Transaction).filter(Transaction.id == id).first()
     if not query:
